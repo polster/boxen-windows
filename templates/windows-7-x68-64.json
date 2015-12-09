@@ -1,0 +1,49 @@
+{
+  "variables": {
+    "headless": "false",
+    "iso_checksum": "1d0d239a252cb53e466d39e752b17c28",
+    "iso_checksum_type": "md5",
+    "iso_url": "http://care.dlservice.microsoft.com/dl/download/evalx/win7/x64/EN/7600.16385.090713-1255_x64fre_enterprise_en-us_EVAL_Eval_Enterprise-GRMCENXEVAL_EN_DVD.iso",
+    "build_timestamp": "{{timestamp}}"
+  },
+  "builders": [{
+    "type": "virtualbox-iso",
+    "vboxmanage": [
+      ["modifyvm", "{{.Name}}", "--natpf1", "winrm,tcp,,55985,,5985"],
+      ["modifyvm", "{{.Name}}", "--memory", "3072"],
+      ["modifyvm", "{{.Name}}", "--vram", "36"],
+      ["modifyvm", "{{.Name}}", "--cpus", "2"]
+    ],
+    "guest_os_type": "Windows7_64",
+    "iso_url": "{{ user `iso_url` }}",
+    "iso_checksum": "{{ user `iso_checksum` }}",
+    "iso_checksum_type": "{{ user `iso_checksum_type` }}",
+    "guest_additions_mode": "attach",
+    "communicator": "winrm",
+    "headless": "{{ user `headless` }}",
+    "winrm_username": "vagrant",
+    "winrm_password": "vagrant",
+    "winrm_timeout": "24h",
+    "shutdown_command": "shutdown /s /t 10 /f /d p:4:1 /c \"Packer Shutdown\"",
+    "shutdown_timeout": "15m",
+    "floppy_files": [
+      "./config/answer-files/windows-7/Autounattend.xml",
+      "./scripts/winrm.ps1",
+      "./scripts/dotnet.ps1",
+      "./scripts/oracle.cer"
+    ]
+  }],
+  "provisioners": [{
+    "type": "powershell",
+    "scripts": [
+      "./scripts/base-setup.ps1",
+      "./scripts/virtualbox.ps1"
+    ]
+  }],
+  "post-processors": [{
+    "type": "vagrant",
+    "keep_input_artifact": true,
+    "output": "./build/windows-7-x86_64-{{.Provider}}-{{user `build_timestamp`}}.box",
+    "vagrantfile_template": "./templates/vagrantfile-windows.template"
+  }]
+}
